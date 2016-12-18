@@ -1,0 +1,204 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>倾斜分屏</title>
+    <style>
+        body,div{margin:0;padding:0;}
+        /*body{background:#000;height:100%}*/
+        .pages{width:100vw;height:100vh;overflow:hidden;position:absolute;}
+        .page{width:100%;height:100%;position: absolute;z-index: 100}
+        .page-part{width:100%;height:100%;position:absolute;overflow:hidden;transition: transform 5s ease-in-out;}
+
+        .page .page-text{background:#000;color:#fff;}
+        .page:nth-child(2n) .page-img{right:-50%;transform:skew(-30deg) translate(0%,0%);}
+        .page:nth-child(2n) .page-text{left:-50%;transform:skew(-30deg) translate(0%,0%);}
+        .page:nth-child(2n+1) .page-img{left:-50%;transform:skew(-30deg) translate(0%,0%);}
+        .page:nth-child(2n+1) .page-text{right:-50%;transform:skew(-30deg) translate(0%,0%);}
+
+        .page .content{transform:skew(30deg);background-size:cover;width:100%;height:100%}
+        .page:nth-child(2n) .content-img{transform-origin:0 100%}
+        .page:nth-child(2n) .content-text{transform-origin:0 100%;text-align:right;padding-top:40vh}
+        .page:nth-child(2n+1) .content-img{transform-origin:100% 0}
+        .page:nth-child(2n+1) .content-text{transform-origin:100% 0;text-align:left;padding-top:40vh}
+
+        .page:nth-child(1) .content-img{background-image:url(images/1.jpg)}
+        .page:nth-child(2) .content-img{background-image:url(images/2.jpg)}
+        .page:nth-child(3) .content-img{background-image:url(images/3.jpg)}
+        .page:nth-child(4) .content-img{background-image:url(images/4.jpg)}
+        .page:nth-child(5) .content-img{background-image:url(images/5.jpg)}
+
+        .pages .active .page-part:nth-child(1){transform:skew(-30deg) translate(0%,-100%);}
+        .pages .active .page-part:nth-child(2){transform:skew(-30deg) translate(0%,100%);}
+
+    </style>
+    <script src="js/jquery-3.1.0.js"></script>
+    <script>
+        /*最初图片页面是重叠一起，通过z-index层级来有限显示，再按上下键盘时，通过改变一个页面的左右两部分（.page-part）的translate来移走当前页面显示下一或上一页面*/
+        window.onload=function(){
+            var page=0;
+            var aPages=document.getElementsByClassName("page");
+/*
+            //获取样式属性
+            function getStyle(obj,styleName){
+                var value=obj.currentStyle ? obj.currentStyle[styleName]:getComputedStyle(obj,false)[styleName];
+                return styleName=='opacity' ? value=Math.round(parseFloat(value)*100):value=parseInt(value);
+            }
+*/
+            //改变重叠1-5页面的层级，页码小的显示在最前面
+            for(var i=0;i<aPages.length;i++){
+                aPages[i].style.zIndex=10-i;
+            }
+            //键盘事件，判断向上翻页还是向下翻页
+            window.onkeydown=function(e){
+               switch(e.keyCode){
+                        //上方向键和W键
+                    case 38:
+                    case 87:
+                        slideTo("previous");
+                        break;
+                        //下方向键和S键
+                    case 40:
+                    case 83:
+                        slideTo("next");
+                        break;
+                }
+            };
+            //事件监听
+            function addListen(obj,event,fn){
+                if(obj.addEventListener){
+                    obj.addEventListener(event,fn,false);
+                }else if(obj.attachEvent){
+                    obj.attachEvent("on"+event,fn);
+                }else{
+                    obj["on"+event]=fn;
+                }
+            }
+            //鼠标滚轮事件
+            function mousewheel(obj,fn){
+                if(window.navigator.userAgent.indexOf("Firefox")!=-1){
+                    addListen(obj,"DOMMouseScroll",wheelfn);
+                }else{
+                    addListen(obj,"mousewheel",wheelfn)
+                }
+                function wheelfn(e){
+                    var e=e||event;
+                    var downDirect=true;
+                        downDirect=e.wheelDelta?e.wheelDelta<0:e.detail>0;
+                        fn&&fn(downDirect);
+                    if(window.event){
+                        e.returnValue=false;
+                        return false;
+                    }else{
+                        e.preventDefault();
+                    }
+                }
+            }
+            mousewheel(window,function(downDirect){
+                if(downDirect){
+                    slideTo("next");
+                }else{
+                    slideTo("previous");
+                }
+            });
+            function slideTo(p){
+                if(typeof p!="number"){
+                    if(typeof p=="string"){
+                        switch (p){
+                            case "previous":
+                                p=page-1;//上一个
+                                break;
+                            case "next":
+                                p=page+1;//下一个
+                                break;
+                        }
+                    }
+                }
+/*
+                //循环翻页
+                if(p<0){
+                    p=4;
+                    aPages[p].className="page" ;
+                }else if(p>4){
+                    p=0;
+                    aPages[p].className="page";
+                }
+                aPages[page].className="page active";//加上active类名让当前一面移出屏幕
+                page=p;//要改变的页面的索引号
+                aPages[page].className="page" ;//让下一张显示
+
+*/
+                 //第一张或最后一张时禁止翻页
+                if(p<0||p>4){
+                    return ;
+                }else{
+                    aPages[page].className="page active";//加上active类名让当前一面移出屏幕
+                    page=p;//要改变的页面的索引号
+                    aPages[page].className="page" ;//让下一张显示
+                }
+
+            }
+        }
+    </script>
+</head>
+<body>
+<p style="position:fixed;top:0;left:46%;font-size:30px;z-index:110;color:#fff;">press key up or down</p>
+<div class="pages">
+    <div class="page">
+        <div class="page-part page-img">
+            <div class="content content-img"></div>
+        </div>
+        <div class="page-part  page-text">
+            <div class="content content-text">
+                <h1>1.Welcome</h1>
+                <p>To Beach!</p>
+            </div>
+        </div>
+    </div>
+    <div class="page">
+        <div class="page-part page-img">
+            <div class="content content-img"></div>
+        </div>
+        <div class="page-part  page-text">
+            <div class="content content-text">
+                <h1>2.Welcome</h1>
+                <p>To Beach!</p>
+            </div>
+        </div>
+    </div>
+    <div class="page">
+        <div class="page-part page-img">
+            <div class="content content-img"></div>
+        </div>
+        <div class="page-part  page-text">
+            <div class="content content-text">
+                <h1>3.Welcome</h1>
+                <p>To Beach!</p>
+            </div>
+        </div>
+    </div>
+    <div class="page">
+        <div class="page-part page-img">
+            <div class="content content-img"></div>
+        </div>
+        <div class="page-part  page-text">
+            <div class="content content-text">
+                <h1>4.Welcome</h1>
+                <p>To Beach!</p>
+            </div>
+        </div>
+    </div>
+    <div class="page">
+        <div class="page-part page-img">
+            <div class="content content-img"></div>
+        </div>
+        <div class="page-part  page-text">
+            <div class="content content-text">
+                <h1>5.Welcome</h1>
+                <p>To Beach!</p>
+            </div>
+        </div>
+    </div>
+ </div>
+</body>
+</html>
